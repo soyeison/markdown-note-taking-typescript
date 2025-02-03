@@ -1,0 +1,11 @@
+services:
+  languagetool:
+    image: elestio/languagetool:latest
+    ports:
+    - 8010:8010
+    environment:
+    - langtool_languageModel=/ngrams
+    - Java_Xms=512m
+    - Java_Xmx=1g
+    volumes:
+    - ./data:/ngrams
