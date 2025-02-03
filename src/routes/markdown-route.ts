@@ -1,6 +1,7 @@
-import path from "path";
+import path, { extname } from "path";
 import express, { Request, Response } from "express";
-import multer from "multer";
+import multer, { FileFilterCallback } from "multer";
+import { MarkdownService } from "../services/markdown-service";
 
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
@@ -27,7 +28,27 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const fileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  callback: FileFilterCallback
+) => {
+  const allowedMimeTypes = ["text/markdown", "text/plain"];
+  const allowedExtensions = [".md", ".markdown"];
+
+  const fileExt = extname(file.originalname).toLowerCase();
+
+  if (
+    allowedMimeTypes.includes(file.mimetype) &&
+    allowedExtensions.includes(fileExt)
+  ) {
+    callback(null, true); // Archivo aceptado
+  } else {
+    callback(new Error("Only allow markdown files (.md o .markdown)")); // Archivo rechazado
+  }
+};
+
+const upload = multer({ storage, fileFilter });
 
 const router = express.Router();
 
@@ -38,8 +59,22 @@ router.post("/upload", upload.single("file"), (req: Request, res: Response) => {
     res.json({
       message: "Archivo subido exitosamente",
       filename: req.file.filename,
-      path: req.file.path,
     });
+  }
+});
+
+router.get("/all-uploaded", async (req: Request, res: Response) => {
+  const markdownService = new MarkdownService();
+  const filesUploaded = await markdownService.getAllFilesUploaded();
+
+  if (!filesUploaded) {
+    res
+      .status(200)
+      .json({ data: null, message: "There aren't files uploaded" });
+  } else {
+    res
+      .status(200)
+      .json({ data: filesUploaded, message: "There are files uploaded" });
   }
 });
 
