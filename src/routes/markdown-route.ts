@@ -78,4 +78,22 @@ router.get("/all-uploaded", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/html-version", async (req: Request, res: Response) => {
+  const { fileName }: { fileName: string } = req.body;
+  if (!fileName) {
+    res.status(400).json({ data: null, message: "Required body" });
+  } else {
+    const markdownService = new MarkdownService();
+    const htmlContent = await markdownService.convertToHTML(fileName);
+
+    if (!htmlContent) {
+      res
+        .status(400)
+        .json({ data: null, message: `Dont exist file with name ${fileName}` });
+    } else {
+      res.status(200).send(htmlContent);
+    }
+  }
+});
+
 export default router;
